@@ -233,16 +233,11 @@ EPMCMD="external/epm/epm"
 echo "Build Directory set to [$BUILDDIR]"
 # populate VERSION.json from VERSION.json.dist with current information
 cd $BUILDDIR
-python packaging/generate_version_json.py > VERSION.json
-
-if [ "$RUNINPLACE" == "1" ] ; then
-    python -c "from __future__ import print_function; import datetime; import json; data=json.load(open('VERSION.json')); data['installation_time'] = datetime.datetime.utcnow().strftime( '%Y-%m-%dT%H:%M:%SZ' ); print(json.dumps(data, indent=4, sort_keys=True))" > VERSION.json.tmp
-    mv VERSION.json.tmp VERSION.json
-fi
+make VERSION.json
 
 # read iRODS Version from JSON
-IRODSVERSION=`python -c "from __future__ import print_function; import json; d = json.loads(open('VERSION.json').read()); print(d['irods_version'])"`
-echo "IRODSVERSION=$IRODSVERSION" > VERSION.tmp # needed for Makefiles
+make VERSION.txt
+IRODSVERSION=`cat VERSION.txt`
 IRODSVERSIONINT=`python iRODS/scripts/python/get_irods_version.py integer`
 echo "Detected iRODS Version to Build [$IRODSVERSION]"
 echo "Detected iRODS Version Integer [$IRODSVERSIONINT]"

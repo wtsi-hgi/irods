@@ -1,4 +1,4 @@
-include VERSION.tmp
+-include VERSION.tmp
 
 include ./iRODS/config/external_versions.txt
 
@@ -87,7 +87,22 @@ clean :
 	@rm -rf doxygen/html
 	@rm -rf mkdocs/html
 	@rm -rf docs/icommands
+	@rm -rf VERSION.json VERSION.txt VERSION.tmp
 
 squeaky_clean : clean
 	@$(MAKE) -C external clean
+
+### Generate VERSION files based on git tree by calling `packaging/generate_version_json.py`
+VERSION.json : packaging/generate_version_json.py VERSION.json.dist .git/HEAD .git/$(shell cat .git/HEAD | awk -F': ' '$$1=="ref" {print $$2}')
+	@python $< > $@
+ifeq ($(RUNINPLACE),1)
+	@python -c "from __future__ import print_function; import datetime; import json; data=json.load(open('VERSION.json')); data['installation_time'] = datetime.datetime.utcnow().strftime( '%Y-%m-%dT%H:%M:%SZ' ); print(json.dumps(data, indent=4, sort_keys=True))" > $@.tmp
+	@mv $@.tmp $@
+endif
+
+VERSION.txt : VERSION.json
+	@python -c "from __future__ import print_function; import json; d = json.loads(open('$<').read()); print(d['irods_version'])" > $@
+
+VERSION.tmp : VERSION.txt
+	@(echo -n "IRODSVERSION=" && cat $<) > $@
 
